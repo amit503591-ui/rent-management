@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Building/Home Base Structure (White/Light) -->
+    <!-- Roof Peak -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26 L29,46 L34,46 L54,30 L74,46 L79,46 Z" />
+
+    <!-- Building Body -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M34,44 L74,44 L74,80 L34,80 Z" />
+
+    <!-- Building Inner Panels / Windows -->
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M39,49 L48,49 L48,58 L39,58 Z" />
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M51,49 L60,49 L60,58 L51,58 Z" />
+    <path
+        android:fillColor="#0284C7"
+        android:pathData="M39,63 L48,63 L48,72 L39,72 Z" />
+
+    <!-- Front Doorway -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M52,62 L60,62 L60,80 L52,80 Z" />
+
+    <!-- Golden Electricity Badge on the right corner -->
+    <!-- Circular Badge background -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M72,66m-13,0a13,13 0,1,1 26,0a13,13 0,1,1 -26,0" />
+    
+    <!-- Gold lightning bolt -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M73,56 L64,68 L70,68 L68,76 L79,64 L73,64 Z" />
+</vector>

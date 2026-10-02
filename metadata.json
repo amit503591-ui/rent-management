@@ -1,0 +1,6 @@
+{
+  "name": "RentPulse",
+  "description": "Smart rent and electricity bill management for landlords and tenants with WhatsApp/SMS notifications and real-time dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
