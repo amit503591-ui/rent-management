@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,6 +50,8 @@ import com.example.data.model.BillEntity
 import com.example.data.model.PaymentEntity
 import com.example.data.model.TenantEntity
 import com.example.ui.components.StatusBadge
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 import com.example.util.FormatUtils
 import com.example.util.NotificationHelper
 
@@ -57,9 +61,13 @@ fun TenantPortalScreen(
     tenant: TenantEntity,
     bills: List<BillEntity>,
     payments: List<PaymentEntity>,
+    language: AppLanguage = AppLanguage.HI,
+    onToggleLanguage: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    val str = AppStrings.get(language)
+    val isHindi = language == AppLanguage.HI
     val totalOutstanding = bills.sumOf { it.remainingBalance }
 
     Scaffold(
@@ -82,10 +90,28 @@ fun TenantPortalScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Room ${tenant.roomNumber} (${tenant.floor}) Portal", fontWeight = FontWeight.Bold)
+                        Text(
+                            if (isHindi) "कमरा ${tenant.roomNumber} (${tenant.floor}) पोर्टल" else "Room ${tenant.roomNumber} (${tenant.floor}) Portal",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
                     }
                 },
                 actions = {
+                    // Language Switcher Toggle
+                    FilledTonalButton(
+                        onClick = onToggleLanguage,
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.Translate, contentDescription = "Language", modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = str.switchToOtherLang,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
                     }
@@ -115,13 +141,13 @@ fun TenantPortalScreen(
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "Welcome, ${tenant.tenantName}!",
+                            text = "${str.welcomeTenant} ${tenant.tenantName}!",
                             fontSize = 14.sp,
                             color = if (totalOutstanding > 0) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (totalOutstanding > 0) "Total Balance Due" else "All Dues Cleared 🎉",
+                            text = if (totalOutstanding > 0) str.currentDueBalance else (if (isHindi) "सभी बकाया चुकता हैं 🎉" else "All Dues Cleared 🎉"),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (totalOutstanding > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
@@ -149,7 +175,11 @@ fun TenantPortalScreen(
                             ) {
                                 Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Pay via UPI (Prem Lata Meena - 9413631213)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(
+                                    if (isHindi) "UPI (Paytm/GPay/PhonePe) से तुरंत भुगतान करें" else "Pay via UPI (Prem Lata Meena - 9413631213)",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
                             }
                         }
 
@@ -158,7 +188,10 @@ fun TenantPortalScreen(
                         // Contact Landlord WhatsApp Button
                         FilledTonalButton(
                             onClick = {
-                                val landlordMsg = "Hi Landlord, I am tenant ${tenant.tenantName} from Room ${tenant.roomNumber} (${tenant.floor}). I would like to discuss my bill/payment."
+                                val landlordMsg = if (isHindi)
+                                    "नमस्ते मकान मालिक जी, मैं कमरा नंबर ${tenant.roomNumber} (${tenant.floor}) से ${tenant.tenantName} बोल रहा हूँ। मुझे अपने बिल के बारे में बात करनी है।"
+                                else
+                                    "Hi Landlord, I am tenant ${tenant.tenantName} from Room ${tenant.roomNumber} (${tenant.floor}). I would like to discuss my bill/payment."
                                 NotificationHelper.openWhatsApp(context, "+919413631213", landlordMsg)
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -169,7 +202,10 @@ fun TenantPortalScreen(
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Contact Landlord via WhatsApp", fontWeight = FontWeight.Bold)
+                            Text(
+                                if (isHindi) "व्हाट्सएप पर मकान मालिक से संपर्क करें" else "Contact Landlord via WhatsApp",
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -178,57 +214,57 @@ fun TenantPortalScreen(
             // Section Header: Pending / Invoices
             item {
                 Text(
-                    text = "Pending & Recent Invoices",
+                    text = str.billsAndReadings,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    fontSize = 18.sp
                 )
             }
 
             if (bills.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(30.dp), contentAlignment = Alignment.Center) {
-                        Text("No invoices generated for your room yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    Text(
+                        if (isHindi) "कोई बिल जारी नहीं हुआ है।" else "No bills generated yet.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             } else {
                 items(bills) { bill ->
-                    TenantBillItemCard(bill = bill, context = context)
+                    TenantBillCard(bill = bill, isHindi = isHindi)
                 }
             }
 
-            // Section Header: Payment History
+            // Section Header: Payment Receipts
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Your Payment History",
+                    text = str.receipts,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    fontSize = 18.sp
                 )
             }
 
             if (payments.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(30.dp), contentAlignment = Alignment.Center) {
-                        Text("No payment records found.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    Text(
+                        if (isHindi) "कोई भुगतान रसीद उपलब्ध नहीं है।" else "No payment receipts yet.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             } else {
                 items(payments) { payment ->
-                    TenantPaymentReceiptCard(payment = payment)
+                    TenantReceiptCard(payment = payment, isHindi = isHindi)
                 }
             }
 
             item {
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(30.dp))
             }
         }
     }
 }
 
 @Composable
-fun TenantBillItemCard(bill: BillEntity, context: Context) {
+fun TenantBillCard(bill: BillEntity, isHindi: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -259,83 +295,59 @@ fun TenantBillItemCard(bill: BillEntity, context: Context) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(8.dp)
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        RoundedCornerShape(8.dp)
                     )
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Base Rent", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (isHindi) "कमरा किराया:" else "Room Rent:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(FormatUtils.formatCurrency(bill.rentAmount), fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ElectricBolt, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(13.dp))
+                        Icon(Icons.Default.ElectricBolt, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Electricity (${bill.unitsConsumed.toInt()} units @ ₹11)", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            (if (isHindi) "बिजली (" else "Electricity (") + "${bill.unitsConsumed.toInt()}" + (if (isHindi) " यूनिट्स @ ₹" else " units @ ₹") + "${bill.electricityRate}):",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     Text(FormatUtils.formatCurrency(bill.electricityAmount), fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
+
                 if (bill.additionalCharges > 0) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Other (${bill.additionalChargesNote})", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text((if (isHindi) "अन्य (" else "Other (") + "${bill.additionalChargesNote}):", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(FormatUtils.formatCurrency(bill.additionalCharges), fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
                 }
+
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Total Due", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(if (isHindi) "कुल बिल:" else "Total Bill Amount:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(FormatUtils.formatCurrency(bill.totalAmount), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
                 }
                 if (bill.paidAmount > 0) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Paid Amount", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
-                        Text("- ${FormatUtils.formatCurrency(bill.paidAmount)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Balance Remaining", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
-                        Text(FormatUtils.formatCurrency(bill.remainingBalance), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
+                        Text(if (isHindi) "जमा की गई राशि:" else "Paid Amount:", fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                        Text("- ${FormatUtils.formatCurrency(bill.paidAmount)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.secondary)
                     }
                 }
-            }
-
-            // UPI Info Box for Bill
-            if (!bill.isFullyPaid) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(10.dp)
-                ) {
-                    Text("💳 UPI Pay to: Prem Lata Meena", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text("Mobile / UPI: 9413631213", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    FilledTonalButton(
-                        onClick = {
-                            NotificationHelper.openUpiPayment(context, bill.remainingBalance, "Room ${bill.roomNumber} - ${bill.monthYear}")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Pay ${FormatUtils.formatCurrency(bill.remainingBalance)} via UPI App", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                if (bill.remainingBalance > 0) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(if (isHindi) "शेष बकाया:" else "Remaining Due:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                        Text(FormatUtils.formatCurrency(bill.remainingBalance), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Meter Readings: Start (${bill.startMeterReading.toInt()}) → End (${bill.endMeterReading.toInt()}) | Due Date: ${FormatUtils.formatDate(bill.dueDate)}",
-                fontSize = 11.sp,
+                text = (if (isHindi) "मीटर रीडिंग: शुरू (" else "Meter: Start (") + "${bill.startMeterReading.toInt()}" + (if (isHindi) ") ➔ अंतिम (" else ") ➔ End (") + "${bill.endMeterReading.toInt()})",
+                fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.outline
             )
         }
@@ -343,7 +355,7 @@ fun TenantBillItemCard(bill: BillEntity, context: Context) {
 }
 
 @Composable
-fun TenantPaymentReceiptCard(payment: PaymentEntity) {
+fun TenantReceiptCard(payment: PaymentEntity, isHindi: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -352,14 +364,14 @@ fun TenantPaymentReceiptCard(payment: PaymentEntity) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center
@@ -368,33 +380,33 @@ fun TenantPaymentReceiptCard(payment: PaymentEntity) {
                         imageVector = Icons.Default.Receipt,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Paid via ${payment.paymentMode}",
+                        text = (if (isHindi) "प्राप्त via " else "Paid via ") + payment.paymentMode,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
                     Text(
-                        text = "Receipt: ${payment.receiptNumber}",
-                        fontSize = 12.sp,
+                        text = (if (isHindi) "रसीद: " else "Receipt: ") + payment.receiptNumber,
+                        fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = FormatUtils.formatDate(payment.paymentDate),
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
             Text(
-                text = FormatUtils.formatCurrency(payment.amountPaid),
+                text = "+ ${FormatUtils.formatCurrency(payment.amountPaid)}",
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary,
-                fontSize = 16.sp
+                fontSize = 15.sp
             )
         }
     }

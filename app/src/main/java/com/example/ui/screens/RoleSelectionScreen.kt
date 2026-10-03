@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdminPanelSettings
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,19 +52,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.TenantEntity
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoleSelectionScreen(
     tenants: List<TenantEntity>,
+    language: AppLanguage = AppLanguage.HI,
+    onToggleLanguage: () -> Unit = {},
     onLandlordLoginSuccess: () -> Unit,
     onTenantLogin: (String) -> Unit
 ) {
+    val str = AppStrings.get(language)
     var showLandlordLoginDialog by remember { mutableStateOf(false) }
     var landlordPasswordInput by remember { mutableStateOf("") }
     var landlordLoginError by remember { mutableStateOf<String?>(null) }
@@ -67,8 +78,11 @@ fun RoleSelectionScreen(
     var showTenantLoginDialog by remember { mutableStateOf(false) }
     var selectedTenant by remember { mutableStateOf<TenantEntity?>(tenants.firstOrNull()) }
     var expandedRoomDropdown by remember { mutableStateOf(false) }
+    var enteredRoomPin by remember { mutableStateOf("") }
+    var tenantLoginError by remember { mutableStateOf<String?>(null) }
 
     val landlordPass = "admin-sumit@#1990"
+    val landlordPassSimple = "9413"
 
     Scaffold(
         topBar = {
@@ -90,7 +104,24 @@ fun RoleSelectionScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("RentPulse", fontWeight = FontWeight.Bold)
+                        Text(str.appTitle, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    }
+                },
+                actions = {
+                    // Language Switcher Toggle
+                    FilledTonalButton(
+                        onClick = onToggleLanguage,
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Translate, contentDescription = "Language", modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = str.switchToOtherLang,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -126,7 +157,7 @@ fun RoleSelectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Rent & Electricity Manager",
+                text = if (language == AppLanguage.HI) "कमरा किराया एवं बिजली बिल प्रबंधन" else "Rent & Electricity Manager",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -136,7 +167,10 @@ fun RoleSelectionScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Floor-wise room billing, Google Drive backup, and instant tenant access.",
+                text = if (language == AppLanguage.HI)
+                    "मंजिल अनुसार कमरे, कैमरा मीटर रीडिंग, व्हाट्सएप बिल और आसान भुगतान।"
+                else
+                    "Floor-wise room billing, camera meter readings, and instant tenant access.",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -175,35 +209,31 @@ fun RoleSelectionScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Landlord Dashboard",
+                            text = str.landlordPortal,
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Secured with admin password & Google Drive sync",
+                            text = str.landlordLoginDesc,
                             color = Color.White.copy(alpha = 0.85f),
-                            fontSize = 13.sp
+                            fontSize = 12.sp
                         )
                     }
+                    Text("➔", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Tenant Portal Card Button -> Opens Room Selector (No PIN required)
+            // Tenant Card Button -> Opens Tenant Login Dialog
             Card(
-                onClick = {
-                    if (tenants.isNotEmpty()) {
-                        selectedTenant = tenants.first()
-                    }
-                    showTenantLoginDialog = true
-                },
+                onClick = { showTenantLoginDialog = true },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -215,71 +245,69 @@ fun RoleSelectionScreen(
                         modifier = Modifier
                             .size(50.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)),
+                            .background(Color.White.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
+                            tint = Color.White,
                             modifier = Modifier.size(28.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Tenant Portal Login",
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            text = str.tenantPortal,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Select your prefilled room (No PIN required)",
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
-                            fontSize = 13.sp
+                            text = str.tenantLoginDesc,
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 12.sp
                         )
                     }
+                    Text("➔", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 
-    // Landlord Login Password Dialog
+    // Landlord Login PIN Dialog
     if (showLandlordLoginDialog) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = {
                 showLandlordLoginDialog = false
                 landlordPasswordInput = ""
                 landlordLoginError = null
             },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AdminPanelSettings, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Landlord Admin Login")
-                }
-            },
+            icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text(str.landlordPortal, fontWeight = FontWeight.Bold) },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Enter Landlord Admin Password.",
+                        if (language == AppLanguage.HI)
+                            "मकान मालिक सुरक्षा पिन दर्ज करें (डिफ़ॉल्ट: 9413):"
+                        else
+                            "Enter Landlord Security PIN (Default: 9413):",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                     OutlinedTextField(
                         value = landlordPasswordInput,
-                        onValueChange = { landlordPasswordInput = it; landlordLoginError = null },
-                        label = { Text("Password") },
-                        singleLine = true,
+                        onValueChange = {
+                            landlordPasswordInput = it
+                            landlordLoginError = null
+                        },
+                        label = { Text("PIN / Passcode") },
                         visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-
                     if (landlordLoginError != null) {
                         Text(
                             text = landlordLoginError!!,
@@ -287,92 +315,70 @@ fun RoleSelectionScreen(
                             fontSize = 12.sp
                         )
                     }
-
-                    // Forgot Password option via Google
-                    TextButton(
-                        onClick = {
-                            // Google Forgot Password Recovery trigger
-                            landlordPasswordInput = landlordPass
-                            landlordLoginError = "Password recovered via Google Sign-In!"
-                        }
-                    ) {
-                        Text("🔑 Forgot Password? (Recover with Google)", fontSize = 12.sp)
-                    }
-
-                    Text(
-                        "Default Password: admin-sumit@#1990",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.outline
-                    )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        if (landlordPasswordInput.trim() == landlordPass) {
+                        if (landlordPasswordInput == landlordPass || landlordPasswordInput == landlordPassSimple) {
                             showLandlordLoginDialog = false
                             landlordPasswordInput = ""
+                            landlordLoginError = null
                             onLandlordLoginSuccess()
                         } else {
-                            landlordLoginError = "Incorrect password. Try admin-sumit@#1990"
+                            landlordLoginError = if (language == AppLanguage.HI) "गलत पिन! कृपया 9413 दर्ज करें।" else "Incorrect PIN! Please enter 9413."
                         }
                     }
                 ) {
-                    Text("Login")
+                    Text(str.loginButton)
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showLandlordLoginDialog = false
-                    landlordPasswordInput = ""
-                    landlordLoginError = null
-                }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = {
+                        showLandlordLoginDialog = false
+                        landlordPasswordInput = ""
+                        landlordLoginError = null
+                    }
+                ) {
+                    Text(str.cancel)
                 }
             }
         )
     }
 
-    // Tenant Login Dialog (No PIN required, select room directly)
+    // Tenant Login Dialog
     if (showTenantLoginDialog) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = {
                 showTenantLoginDialog = false
+                enteredRoomPin = ""
+                tenantLoginError = null
             },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Tenant Portal Login")
-                }
-            },
+            icon = { Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
+            title = { Text(str.tenantPortal, fontWeight = FontWeight.Bold) },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        "Select your Room Number prefilled by your landlord to view your dues instantly.",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (tenants.isEmpty()) {
                         Text(
-                            "No rooms configured by landlord yet.",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp
+                            if (language == AppLanguage.HI)
+                                "कोई कमरा पंजीकृत नहीं है। कृपया पहले मकान मालिक से संपर्क करें।"
+                            else
+                                "No rooms registered yet. Please have the landlord add your room first.",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
+                        // Room Dropdown
                         ExposedDropdownMenuBox(
                             expanded = expandedRoomDropdown,
                             onExpandedChange = { expandedRoomDropdown = !expandedRoomDropdown }
                         ) {
                             OutlinedTextField(
-                                value = selectedTenant?.let { "Room ${it.roomNumber} (${it.floor}) - ${it.tenantName}" } ?: "Select Room",
+                                value = selectedTenant?.let { "Room ${it.roomNumber} - ${it.tenantName}" } ?: str.selectRoom,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Room Number") },
+                                label = { Text(str.selectRoom) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRoomDropdown) },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -382,42 +388,69 @@ fun RoleSelectionScreen(
                                 expanded = expandedRoomDropdown,
                                 onDismissRequest = { expandedRoomDropdown = false }
                             ) {
-                                tenants.forEach { tenant ->
+                                tenants.forEach { t ->
                                     DropdownMenuItem(
-                                        text = { Text("Room ${tenant.roomNumber} (${tenant.floor}): ${tenant.tenantName}") },
+                                        text = { Text("Room ${t.roomNumber} (${t.tenantName})") },
                                         onClick = {
-                                            selectedTenant = tenant
+                                            selectedTenant = t
                                             expandedRoomDropdown = false
                                         }
                                     )
                                 }
                             }
                         }
-                    }
 
-                    Text(
-                        "ℹ️ No password or PIN required for tenants.",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        OutlinedTextField(
+                            value = enteredRoomPin,
+                            onValueChange = {
+                                enteredRoomPin = it
+                                tenantLoginError = null
+                            },
+                            label = { Text(str.enterRoomPin) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (tenantLoginError != null) {
+                            Text(
+                                text = tenantLoginError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        selectedTenant?.let {
-                            showTenantLoginDialog = false
-                            onTenantLogin(it.roomNumber)
+                if (tenants.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            val tenant = selectedTenant
+                            if (tenant == null) {
+                                tenantLoginError = if (language == AppLanguage.HI) "कृपया कमरा चुनें" else "Please select a room"
+                            } else if (enteredRoomPin.trim() != tenant.accessCode.trim()) {
+                                tenantLoginError = if (language == AppLanguage.HI) "गलत 4-अंकीय पिन! (डिफ़ॉल्ट: ${tenant.accessCode})" else "Incorrect PIN! (Default: ${tenant.accessCode})"
+                            } else {
+                                showTenantLoginDialog = false
+                                onTenantLogin(tenant.roomNumber)
+                            }
                         }
-                    },
-                    enabled = tenants.isNotEmpty() && selectedTenant != null
-                ) {
-                    Text("Enter Portal")
+                    ) {
+                        Text(str.loginButton)
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showTenantLoginDialog = false }) {
-                    Text("Cancel")
+                TextButton(
+                    onClick = {
+                        showTenantLoginDialog = false
+                        enteredRoomPin = ""
+                        tenantLoginError = null
+                    }
+                ) {
+                    Text(str.cancel)
                 }
             }
         )

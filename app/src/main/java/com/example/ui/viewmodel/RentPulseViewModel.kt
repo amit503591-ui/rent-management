@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.data.RentPulseDatabase
 import com.example.data.RentPulseRepository
 import com.example.data.model.BillEntity
+import com.example.data.model.MaintenanceEntity
 import com.example.data.model.PaymentEntity
 import com.example.data.model.TenantEntity
 import com.example.util.BackupHelper
@@ -28,7 +29,7 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         val db = RentPulseDatabase.getDatabase(application, viewModelScope)
-        repository = RentPulseRepository(db.tenantDao(), db.billDao(), db.paymentDao())
+        repository = RentPulseRepository(db.tenantDao(), db.billDao(), db.paymentDao(), db.maintenanceDao())
     }
 
     // Role state
@@ -38,6 +39,18 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
     // Logged in tenant for tenant portal
     private val _currentTenant = MutableStateFlow<TenantEntity?>(null)
     val currentTenant: StateFlow<TenantEntity?> = _currentTenant.asStateFlow()
+
+    // Language state (English / हिन्दी)
+    private val _appLanguage = MutableStateFlow(com.example.util.AppLanguage.HI)
+    val appLanguage: StateFlow<com.example.util.AppLanguage> = _appLanguage.asStateFlow()
+
+    fun toggleLanguage() {
+        _appLanguage.value = if (_appLanguage.value == com.example.util.AppLanguage.EN) com.example.util.AppLanguage.HI else com.example.util.AppLanguage.EN
+    }
+
+    fun setLanguage(lang: com.example.util.AppLanguage) {
+        _appLanguage.value = lang
+    }
 
     // UI Feedback messages
     private val _toastMessage = MutableStateFlow<String?>(null)
@@ -56,12 +69,18 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
     val allPayments: StateFlow<List<PaymentEntity>> = repository.allPayments
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allMaintenanceRequests: StateFlow<List<MaintenanceEntity>> = repository.allMaintenanceRequests
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Tenant-specific streams
     private val _tenantBills = MutableStateFlow<List<BillEntity>>(emptyList())
     val tenantBills: StateFlow<List<BillEntity>> = _tenantBills.asStateFlow()
 
     private val _tenantPayments = MutableStateFlow<List<PaymentEntity>>(emptyList())
     val tenantPayments: StateFlow<List<PaymentEntity>> = _tenantPayments.asStateFlow()
+
+    private val _tenantMaintenance = MutableStateFlow<List<MaintenanceEntity>>(emptyList())
+    val tenantMaintenance: StateFlow<List<MaintenanceEntity>> = _tenantMaintenance.asStateFlow()
 
     fun setRole(role: AppRole) {
         _appRole.value = role
@@ -95,6 +114,11 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
                 _tenantPayments.value = payments
             }
         }
+        viewModelScope.launch {
+            repository.getMaintenanceForTenant(tenantId).collect { requests ->
+                _tenantMaintenance.value = requests
+            }
+        }
     }
 
     fun addTenant(
@@ -122,6 +146,40 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
                 onComplete(true, "Room & Tenant added successfully!")
             } catch (e: Exception) {
                 onComplete(false, "Error: Room number might already exist.")
+            }
+        }
+    }
+
+    fun deleteTenant(
+        tenantId: Long,
+        onComplete: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.deleteTenantCascade(tenantId)
+                if (_currentTenant.value?.id == tenantId) {
+                    _currentTenant.value = null
+                }
+                onComplete(true, "Tenant and records deleted successfully!")
+            } catch (e: Exception) {
+                onComplete(false, "Failed to delete tenant: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun updateTenantDetails(
+        tenant: TenantEntity,
+        onComplete: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.updateTenant(tenant)
+                if (_currentTenant.value?.id == tenant.id) {
+                    _currentTenant.value = tenant
+                }
+                onComplete(true, "Tenant updated successfully!")
+            } catch (e: Exception) {
+                onComplete(false, "Failed to update: ${e.localizedMessage}")
             }
         }
     }
@@ -215,6 +273,50 @@ class RentPulseViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             } catch (e: Exception) {
                 onComplete(false, "Error recording payment: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun logMaintenance(
+        tenantId: Long,
+        roomNumber: String,
+        tenantName: String,
+        title: String,
+        description: String,
+        category: String,
+        priority: String,
+        onComplete: (Boolean, String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val req = MaintenanceEntity(
+                    tenantId = tenantId,
+                    roomNumber = roomNumber,
+                    tenantName = tenantName,
+                    issueTitle = title,
+                    issueDescription = description,
+                    category = category,
+                    priority = priority,
+                    status = "PENDING",
+                    requestDate = System.currentTimeMillis()
+                )
+                repository.insertMaintenance(req)
+                onComplete(true, "Maintenance request logged successfully!")
+                if (_currentTenant.value?.id == tenantId) {
+                    loadTenantSpecificData(tenantId)
+                }
+            } catch (e: Exception) {
+                onComplete(false, "Failed to log maintenance: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun resolveMaintenance(requestId: Long, tenantId: Long?) {
+        viewModelScope.launch {
+            repository.updateMaintenanceStatus(requestId, "RESOLVED", System.currentTimeMillis())
+            _toastMessage.value = "Maintenance request marked as resolved!"
+            if (tenantId != null && _currentTenant.value?.id == tenantId) {
+                loadTenantSpecificData(tenantId)
             }
         }
     }

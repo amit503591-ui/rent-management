@@ -38,6 +38,9 @@ interface TenantDao {
     @Delete
     suspend fun deleteTenant(tenant: TenantEntity)
 
+    @Query("DELETE FROM tenants WHERE id = :id")
+    suspend fun deleteTenantById(id: Long)
+
     @Query("UPDATE tenants SET lastMeterReading = :newReading WHERE id = :tenantId")
     suspend fun updateLastMeterReading(tenantId: Long, newReading: Double)
 }

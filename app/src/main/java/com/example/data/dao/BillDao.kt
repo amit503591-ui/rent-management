@@ -41,6 +41,9 @@ interface BillDao {
     @Delete
     suspend fun deleteBill(bill: BillEntity)
 
+    @Query("DELETE FROM bills WHERE tenantId = :tenantId")
+    suspend fun deleteBillsForTenant(tenantId: Long)
+
     @Query("UPDATE bills SET paidAmount = paidAmount + :amount, status = :status WHERE id = :billId")
     suspend fun recordPaymentOnBill(billId: Long, amount: Double, status: String)
 }

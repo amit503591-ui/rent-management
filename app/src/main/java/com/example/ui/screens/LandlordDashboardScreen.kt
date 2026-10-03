@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,10 +27,12 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +60,8 @@ import com.example.data.model.PaymentEntity
 import com.example.data.model.TenantEntity
 import com.example.ui.components.BillCard
 import com.example.ui.components.StatusBadge
+import com.example.util.AppLanguage
+import com.example.util.AppStrings
 import com.example.util.FormatUtils
 import com.example.util.NotificationHelper
 
@@ -66,6 +71,8 @@ fun LandlordDashboardScreen(
     tenants: List<TenantEntity>,
     bills: List<BillEntity>,
     payments: List<PaymentEntity>,
+    language: AppLanguage = AppLanguage.HI,
+    onToggleLanguage: () -> Unit = {},
     onNavigateCreateBill: () -> Unit,
     onNavigateTenants: () -> Unit,
     onNavigateAnalytics: () -> Unit,
@@ -75,6 +82,8 @@ fun LandlordDashboardScreen(
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
+    val str = AppStrings.get(language)
+    val isHindi = language == AppLanguage.HI
     var selectedTab by remember { mutableIntStateOf(0) } // 0: Pending Bills, 1: Payments History
 
     val totalCollected = payments.sumOf { it.amountPaid }
@@ -101,10 +110,24 @@ fun LandlordDashboardScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Landlord Dashboard", fontWeight = FontWeight.Bold)
+                        Text(str.dashboardTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 },
                 actions = {
+                    // Language Switcher Button
+                    FilledTonalButton(
+                        onClick = onToggleLanguage,
+                        shape = RoundedCornerShape(20.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp)
+                    ) {
+                        Icon(Icons.Default.Translate, contentDescription = "Language", modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = str.switchToOtherLang,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
                     }
@@ -136,20 +159,20 @@ fun LandlordDashboardScreen(
                 ) {
                     MetricCard(
                         modifier = Modifier.weight(1f),
-                        title = "Collected",
+                        title = str.collected,
                         amount = FormatUtils.formatCurrency(totalCollected),
                         color = MaterialTheme.colorScheme.secondary
                     )
                     MetricCard(
                         modifier = Modifier.weight(1f),
-                        title = "Pending Dues",
+                        title = str.pendingDues,
                         amount = FormatUtils.formatCurrency(totalPending),
                         color = MaterialTheme.colorScheme.error
                     )
                     MetricCard(
                         modifier = Modifier.weight(1f),
-                        title = "Rooms",
-                        amount = "$occupiedRooms Active",
+                        title = str.activeRooms,
+                        amount = "$occupiedRooms " + (if (isHindi) "कमरे" else "Active"),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -179,18 +202,18 @@ fun LandlordDashboardScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    "Income Trends & Payment Tracker",
+                                    str.incomeTrends,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    "View monthly bar chart & check who paid vs due",
+                                    str.incomeTrendsDesc,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
                             }
                         }
-                        Text("Charts 📊", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("📊", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
                 }
             }
@@ -219,18 +242,18 @@ fun LandlordDashboardScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    "Manage Floor Rooms & Tenants",
+                                    str.manageRoomsAndTenants,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Text(
-                                    "Add rooms by floor, rent & meter readings",
+                                    str.manageRoomsDesc,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                                 )
                             }
                         }
-                        Text("View →", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text("➔", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                 }
             }
@@ -259,18 +282,18 @@ fun LandlordDashboardScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    "Auto-Send Dues Reminders",
+                                    str.broadcastReminders,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    "Send WhatsApp message using saved tenant records",
+                                    str.broadcastRemindersDesc,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
                             }
                         }
-                        Text("Send 📢", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("📢", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -299,23 +322,23 @@ fun LandlordDashboardScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    "Backup & Sync to Google Drive",
+                                    if (isHindi) "Google Drive बैकअप एवं सिंक" else "Backup & Sync to Google Drive",
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 Text(
-                                    "Prevent data loss on device change",
+                                    if (isHindi) "फोन बदलने पर भी डेटा सुरक्षित रहेगा" else "Prevent data loss on device change",
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                                 )
                             }
                         }
-                        Text("Backup ☁️", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        Text("☁️", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
                     }
                 }
             }
 
-            // Tabs for Pending Bills vs Payment History
+            // Tab Selector
             item {
                 TabRow(
                     selectedTabIndex = selectedTab,
@@ -327,12 +350,12 @@ fun LandlordDashboardScreen(
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        text = { Text("Invoices & Bills (${bills.size})", fontWeight = FontWeight.Bold) }
+                        text = { Text("${str.pendingBillsTab} (${bills.size})", fontWeight = FontWeight.Bold) }
                     )
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        text = { Text("Payment Receipts (${payments.size})", fontWeight = FontWeight.Bold) }
+                        text = { Text("${str.paymentHistoryTab} (${payments.size})", fontWeight = FontWeight.Bold) }
                     )
                 }
             }
@@ -341,7 +364,10 @@ fun LandlordDashboardScreen(
                 if (bills.isEmpty()) {
                     item {
                         Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                            Text("No bills generated yet. Tap + to create one.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (isHindi) "कोई बिल नहीं है। नया बिल बनाने के लिए + दबाएं।" else "No bills generated yet. Tap + to create one.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 } else {
@@ -349,11 +375,11 @@ fun LandlordDashboardScreen(
                         BillCard(
                             bill = bill,
                             onWhatsAppClick = {
-                                val msg = NotificationHelper.generateBillMessage(bill)
+                                val msg = NotificationHelper.generateBillMessage(bill, isHindi = isHindi)
                                 NotificationHelper.openWhatsApp(context, bill.tenantPhone, msg)
                             },
                             onSmsClick = {
-                                val msg = NotificationHelper.generateBillMessage(bill)
+                                val msg = NotificationHelper.generateBillMessage(bill, isHindi = isHindi)
                                 NotificationHelper.sendSms(context, bill.tenantPhone, msg)
                             },
                             onPayClick = {
@@ -366,12 +392,15 @@ fun LandlordDashboardScreen(
                 if (payments.isEmpty()) {
                     item {
                         Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                            Text("No payments recorded yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (isHindi) "कोई भुगतान रसीद दर्ज नहीं है।" else "No payments recorded yet.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 } else {
                     items(payments) { payment ->
-                        PaymentReceiptItem(payment = payment)
+                        PaymentReceiptItem(payment = payment, isHindi = isHindi)
                     }
                 }
             }
@@ -414,7 +443,7 @@ fun MetricCard(
 }
 
 @Composable
-fun PaymentReceiptItem(payment: PaymentEntity) {
+fun PaymentReceiptItem(payment: PaymentEntity, isHindi: Boolean = false) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -445,13 +474,12 @@ fun PaymentReceiptItem(payment: PaymentEntity) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Room ${payment.roomNumber} - ${payment.tenantName}",
+                        text = "${payment.tenantName} (Room ${payment.roomNumber})",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        fontSize = 15.sp
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Mode: ${payment.paymentMode} | ${payment.receiptNumber}",
+                        text = (if (isHindi) "माध्यम: " else "Paid via ") + payment.paymentMode,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -462,12 +490,19 @@ fun PaymentReceiptItem(payment: PaymentEntity) {
                     )
                 }
             }
-            Text(
-                text = "+ ${FormatUtils.formatCurrency(payment.amountPaid)}",
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary,
-                fontSize = 15.sp
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "+ ${FormatUtils.formatCurrency(payment.amountPaid)}",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = payment.receiptNumber,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }

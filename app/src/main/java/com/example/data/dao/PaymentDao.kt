@@ -20,4 +20,7 @@ interface PaymentDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPayment(payment: PaymentEntity): Long
+
+    @Query("DELETE FROM payments WHERE tenantId = :tenantId")
+    suspend fun deletePaymentsForTenant(tenantId: Long)
 }

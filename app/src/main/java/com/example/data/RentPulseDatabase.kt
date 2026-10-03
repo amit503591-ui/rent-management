@@ -6,9 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.dao.BillDao
+import com.example.data.dao.MaintenanceDao
 import com.example.data.dao.PaymentDao
 import com.example.data.dao.TenantDao
 import com.example.data.model.BillEntity
+import com.example.data.model.MaintenanceEntity
 import com.example.data.model.PaymentEntity
 import com.example.data.model.TenantEntity
 import kotlinx.coroutines.CoroutineScope
@@ -16,8 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [TenantEntity::class, BillEntity::class, PaymentEntity::class],
-    version = 2,
+    entities = [TenantEntity::class, BillEntity::class, PaymentEntity::class, MaintenanceEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class RentPulseDatabase : RoomDatabase() {
@@ -25,6 +27,7 @@ abstract class RentPulseDatabase : RoomDatabase() {
     abstract fun tenantDao(): TenantDao
     abstract fun billDao(): BillDao
     abstract fun paymentDao(): PaymentDao
+    abstract fun maintenanceDao(): MaintenanceDao
 
     companion object {
         @Volatile
@@ -62,6 +65,7 @@ abstract class RentPulseDatabase : RoomDatabase() {
             val tenantDao = database.tenantDao()
             val billDao = database.billDao()
             val paymentDao = database.paymentDao()
+            val maintenanceDao = database.maintenanceDao()
 
             val now = System.currentTimeMillis()
             val oneDayMs = 24 * 60 * 60 * 1000L
@@ -199,6 +203,36 @@ abstract class RentPulseDatabase : RoomDatabase() {
                     paymentMode = "Bank Transfer",
                     transactionRef = "NEFT8891234",
                     receiptNumber = "REC-F2-001"
+                )
+            )
+
+            // Seed sample maintenance requests
+            maintenanceDao.insertRequest(
+                MaintenanceEntity(
+                    tenantId = t1Id,
+                    roomNumber = "G1",
+                    tenantName = "Rahul Sharma",
+                    issueTitle = "Bathroom Tap Leakage",
+                    issueDescription = "Water is constantly dripping from the washbasin tap.",
+                    category = "Plumbing",
+                    status = "PENDING",
+                    priority = "Normal",
+                    requestDate = now - (3L * oneDayMs)
+                )
+            )
+
+            maintenanceDao.insertRequest(
+                MaintenanceEntity(
+                    tenantId = t2Id,
+                    roomNumber = "F1",
+                    tenantName = "Priya Verma",
+                    issueTitle = "MCB Tripping on AC",
+                    issueDescription = "AC circuit breaker trips when turning on high cool.",
+                    category = "Electrical",
+                    status = "RESOLVED",
+                    priority = "Urgent",
+                    requestDate = now - (15L * oneDayMs),
+                    resolvedDate = now - (14L * oneDayMs)
                 )
             )
         }
